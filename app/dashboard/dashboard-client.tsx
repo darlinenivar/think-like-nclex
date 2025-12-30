@@ -1,357 +1,422 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { createClient } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
 
-type UserEmail = string | null;
+type Stat = { label: string; value: string; sub: string };
 
 export default function DashboardClient() {
-  const supabase = useMemo(() => {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    return createClient(url, key);
+  const router = useRouter();
+  const [email, setEmail] = useState<string>("");
+
+  // Si ya guardas el email en localStorage, esto lo muestra.
+  // Si no, no pasa nada: solo saldrá vacío.
+  useEffect(() => {
+    try {
+      const stored =
+        localStorage.getItem("userEmail") ||
+        localStorage.getItem("email") ||
+        "";
+      if (stored) setEmail(stored);
+    } catch {}
   }, []);
 
-  const [email, setEmail] = useState<UserEmail>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-
-    (async () => {
-      try {
-        const { data } = await supabase.auth.getUser();
-        const userEmail = data?.user?.email ?? null;
-        if (mounted) setEmail(userEmail);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-
-    return () => {
-      mounted = false;
-    };
-  }, [supabase]);
-
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    window.location.href = "/login";
-  }
+  const stats: Stat[] = useMemo(
+    () => [
+      { label: "ACCURACY", value: "—", sub: "Coming next" },
+      { label: "QUESTIONS", value: "—", sub: "Coming next" },
+      { label: "STREAK", value: "—", sub: "Coming next" },
+      { label: "LAST ACTIVITY", value: "—", sub: "Coming next" },
+    ],
+    []
+  );
 
   return (
-    <div style={styles.page}>
-      {/* Top Bar */}
-      <header style={styles.header}>
-        <div style={styles.brandRow}>
-          <div style={styles.logo}>DMC</div>
-          <div>
-            <div style={styles.brandTitle}>Think Like NCLEX</div>
-            <div style={styles.brandSub}>
-              {loading ? "Loading..." : email ? email : "Guest"}
-            </div>
+    <div className="page">
+      {/* Fondo con movimiento suave */}
+      <div className="bg">
+        <div className="blob b1" />
+        <div className="blob b2" />
+        <div className="grain" />
+      </div>
+
+      {/* Header */}
+      <header className="topbar">
+        <div className="brand" onClick={() => router.push("/dashboard")}>
+          <div className="logo">DMC</div>
+          <div className="brandText">
+            <div className="title">Think Like NCLEX</div>
+            <div className="subtitle">{email || " "}</div>
           </div>
         </div>
 
-        <nav style={styles.nav}>
-          <Link href="/dashboard" style={styles.navBtnActive}>
+        <nav className="nav">
+          <button className="pill active" onClick={() => router.push("/dashboard")}>
             Dashboard
-          </Link>
-          <Link href="/practice" style={styles.navBtn}>
+          </button>
+          <button className="pill" onClick={() => router.push("/practice")}>
             Practice
-          </Link>
-          <Link href="/planner" style={styles.navBtn}>
+          </button>
+          <button className="pill" onClick={() => router.push("/planner")}>
             Planner
-          </Link>
+          </button>
 
-          <button
-            type="button"
-            style={styles.buyBtn}
-            onClick={() => alert("Buy page coming next ✅")}
-          >
+          <button className="cta" onClick={() => router.push("/buy")}>
             Buy
           </button>
 
-          <button type="button" style={styles.navBtn} onClick={handleLogout}>
+          <button className="ghost" onClick={() => router.push("/login")}>
             Log out
           </button>
         </nav>
       </header>
 
-      {/* Main */}
-      <main style={styles.main}>
-        <section style={styles.card}>
-          <h1 style={styles.h1}>Dashboard</h1>
-          <p style={styles.p}>
+      {/* Contenido */}
+      <main className="wrap">
+        <section className="card">
+          <h1 className="h1">Dashboard</h1>
+          <p className="p">
             This is your home base. Your progress and stats will live here.
           </p>
 
-          <div style={styles.grid}>
-            <div style={styles.stat}>
-              <div style={styles.statLabel}>Accuracy</div>
-              <div style={styles.statValue}>—</div>
-              <div style={styles.statHint}>Coming next</div>
-            </div>
-
-            <div style={styles.stat}>
-              <div style={styles.statLabel}>Questions</div>
-              <div style={styles.statValue}>—</div>
-              <div style={styles.statHint}>Coming next</div>
-            </div>
-
-            <div style={styles.stat}>
-              <div style={styles.statLabel}>Streak</div>
-              <div style={styles.statValue}>—</div>
-              <div style={styles.statHint}>Coming next</div>
-            </div>
-
-            <div style={styles.stat}>
-              <div style={styles.statLabel}>Last activity</div>
-              <div style={styles.statValue}>—</div>
-              <div style={styles.statHint}>Coming next</div>
-            </div>
+          <div className="grid">
+            {stats.map((s) => (
+              <div className="stat" key={s.label}>
+                <div className="statLabel">{s.label}</div>
+                <div className="statValue">{s.value}</div>
+                <div className="statSub">{s.sub}</div>
+              </div>
+            ))}
           </div>
 
-          <div style={{ height: 16 }} />
-
-          <div style={styles.nextSteps}>
-            <div style={styles.nextTitle}>Next step</div>
-            <div style={styles.nextText}>
+          <div className="next">
+            <div className="nextTitle">Next step</div>
+            <div className="nextText">
               Go to <b>Practice</b> and choose mode + number of questions.
             </div>
 
-            <div style={styles.actionsRow}>
-              <Link href="/practice" style={styles.primaryBtn}>
+            <div className="actions">
+              <button className="primary" onClick={() => router.push("/practice")}>
                 Start Practice
-              </Link>
-              <Link href="/planner" style={styles.secondaryBtn}>
+              </button>
+              <button className="secondary" onClick={() => router.push("/planner")}>
                 Open Planner
-              </Link>
+              </button>
             </div>
           </div>
-        </section>
 
-        <footer style={styles.footer}>
-          Works on iPhone / Android / iPad / Tablet / Laptop. Optimized for fast
-          loading.
-        </footer>
+          <div className="footerNote">
+            Works on iPhone / Android / iPad / Tablet / Laptop. Optimized for fast
+            loading.
+          </div>
+        </section>
       </main>
+
+      {/* Estilos (no tienes que tocar globals.css) */}
+      <style jsx global>{`
+        :root {
+          --bg1: #0b0f24;
+          --bg2: #120a2a;
+          --ink: rgba(255, 255, 255, 0.92);
+          --muted: rgba(255, 255, 255, 0.7);
+          --soft: rgba(255, 255, 255, 0.12);
+          --soft2: rgba(255, 255, 255, 0.08);
+          --border: rgba(255, 255, 255, 0.14);
+          --accent: #7c3aed; /* morado */
+          --accent2: #4f46e5; /* índigo */
+        }
+
+        html,
+        body {
+          height: 100%;
+        }
+
+        .page {
+          min-height: 100vh;
+          color: var(--ink);
+          position: relative;
+          overflow: hidden;
+          background: radial-gradient(1200px 600px at 20% 10%, #2a1b5a 0%, transparent 60%),
+            radial-gradient(1000px 700px at 80% 30%, #1b2a6a 0%, transparent 60%),
+            linear-gradient(180deg, var(--bg1), var(--bg2));
+        }
+
+        .bg {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+        }
+
+        .blob {
+          position: absolute;
+          width: 520px;
+          height: 520px;
+          border-radius: 999px;
+          filter: blur(55px);
+          opacity: 0.55;
+          animation: floaty 12s ease-in-out infinite;
+        }
+
+        .b1 {
+          left: -120px;
+          top: 120px;
+          background: radial-gradient(circle at 30% 30%, var(--accent), transparent 60%);
+          animation-delay: 0s;
+        }
+
+        .b2 {
+          right: -140px;
+          top: 40px;
+          background: radial-gradient(circle at 30% 30%, var(--accent2), transparent 60%);
+          animation-delay: 2s;
+        }
+
+        @keyframes floaty {
+          0% {
+            transform: translate3d(0, 0, 0) scale(1);
+          }
+          50% {
+            transform: translate3d(40px, -18px, 0) scale(1.04);
+          }
+          100% {
+            transform: translate3d(0, 0, 0) scale(1);
+          }
+        }
+
+        .grain {
+          position: absolute;
+          inset: 0;
+          opacity: 0.06;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+          mix-blend-mode: overlay;
+        }
+
+        .topbar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 18px 20px;
+        }
+
+        .brand {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          cursor: pointer;
+          user-select: none;
+        }
+
+        .logo {
+          width: 44px;
+          height: 44px;
+          border-radius: 14px;
+          display: grid;
+          place-items: center;
+          font-weight: 800;
+          letter-spacing: 0.5px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid var(--border);
+          backdrop-filter: blur(10px);
+        }
+
+        .brandText .title {
+          font-size: 16px;
+          font-weight: 800;
+          line-height: 1.1;
+        }
+
+        .brandText .subtitle {
+          font-size: 12px;
+          color: var(--muted);
+          margin-top: 2px;
+          max-width: 260px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .nav {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .pill,
+        .cta,
+        .ghost {
+          border: 1px solid var(--border);
+          background: rgba(255, 255, 255, 0.08);
+          color: var(--ink);
+          padding: 10px 14px;
+          border-radius: 999px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: transform 0.08s ease, background 0.2s ease;
+          backdrop-filter: blur(12px);
+        }
+
+        .pill:hover,
+        .ghost:hover {
+          background: rgba(255, 255, 255, 0.12);
+          transform: translateY(-1px);
+        }
+
+        .pill.active {
+          background: rgba(255, 255, 255, 0.16);
+        }
+
+        .cta {
+          border: 1px solid rgba(124, 58, 237, 0.55);
+          background: linear-gradient(135deg, rgba(124, 58, 237, 0.95), rgba(79, 70, 229, 0.9));
+        }
+
+        .cta:hover {
+          transform: translateY(-1px);
+          filter: brightness(1.03);
+        }
+
+        .ghost {
+          background: transparent;
+        }
+
+        .wrap {
+          padding: 18px 18px 40px;
+          display: flex;
+          justify-content: center;
+        }
+
+        .card {
+          width: min(980px, 100%);
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid var(--border);
+          border-radius: 22px;
+          padding: 22px;
+          backdrop-filter: blur(14px);
+          box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+        }
+
+        .h1 {
+          margin: 0;
+          font-size: 34px;
+          letter-spacing: -0.5px;
+        }
+
+        .p {
+          margin: 10px 0 16px;
+          color: var(--muted);
+        }
+
+        .grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 12px;
+          margin-top: 14px;
+        }
+
+        .stat {
+          background: rgba(255, 255, 255, 0.07);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 16px;
+          padding: 14px;
+          min-height: 86px;
+        }
+
+        .statLabel {
+          font-size: 12px;
+          letter-spacing: 0.12em;
+          color: rgba(255, 255, 255, 0.65);
+          font-weight: 800;
+        }
+
+        .statValue {
+          font-size: 22px;
+          font-weight: 900;
+          margin-top: 8px;
+        }
+
+        .statSub {
+          margin-top: 2px;
+          color: rgba(255, 255, 255, 0.65);
+          font-size: 12px;
+        }
+
+        .next {
+          margin-top: 16px;
+          padding-top: 14px;
+          border-top: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .nextTitle {
+          font-weight: 900;
+          margin-bottom: 6px;
+        }
+
+        .nextText {
+          color: rgba(255, 255, 255, 0.78);
+        }
+
+        .actions {
+          display: flex;
+          gap: 10px;
+          margin-top: 12px;
+          flex-wrap: wrap;
+        }
+
+        .primary,
+        .secondary {
+          border: 1px solid var(--border);
+          padding: 12px 14px;
+          border-radius: 14px;
+          font-weight: 900;
+          cursor: pointer;
+          transition: transform 0.08s ease, filter 0.2s ease;
+        }
+
+        .primary {
+          background: linear-gradient(135deg, rgba(124, 58, 237, 0.95), rgba(79, 70, 229, 0.9));
+          border-color: rgba(124, 58, 237, 0.55);
+          color: white;
+        }
+
+        .secondary {
+          background: rgba(255, 255, 255, 0.08);
+          color: white;
+        }
+
+        .primary:hover,
+        .secondary:hover {
+          transform: translateY(-1px);
+          filter: brightness(1.03);
+        }
+
+        .footerNote {
+          margin-top: 16px;
+          text-align: center;
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.6);
+        }
+
+        @media (max-width: 860px) {
+          .grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 520px) {
+          .topbar {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+          .grid {
+            grid-template-columns: 1fr;
+          }
+          .h1 {
+            font-size: 28px;
+          }
+        }
+      `}</style>
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-    minHeight: "100vh",
-    background:
-      "radial-gradient(1200px 600px at 20% 10%, rgba(124,58,237,0.22) 0%, rgba(255,255,255,0) 60%), radial-gradient(1200px 700px at 80% 20%, rgba(59,130,246,0.18) 0%, rgba(255,255,255,0) 60%), linear-gradient(180deg, #f5f3ff 0%, #ffffff 55%, #ffffff 100%)",
-    color: "#0b1220",
-  },
-
-  header: {
-    position: "sticky",
-    top: 0,
-    zIndex: 10,
-    backdropFilter: "blur(10px)",
-    background: "rgba(255,255,255,0.75)",
-    borderBottom: "1px solid rgba(15,23,42,0.08)",
-    padding: "14px 16px",
-    display: "flex",
-    gap: 12,
-    alignItems: "center",
-    justifyContent: "space-between",
-    flexWrap: "wrap",
-  },
-
-  brandRow: {
-    display: "flex",
-    gap: 10,
-    alignItems: "center",
-    minWidth: 260,
-  },
-
-  logo: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    background:
-      "linear-gradient(135deg, rgba(124,58,237,1) 0%, rgba(59,130,246,1) 100%)",
-    color: "white",
-    fontWeight: 800,
-    display: "grid",
-    placeItems: "center",
-    letterSpacing: 0.5,
-    boxShadow: "0 10px 24px rgba(124,58,237,0.25)",
-  },
-
-  brandTitle: {
-    fontSize: 16,
-    fontWeight: 800,
-    lineHeight: 1.1,
-  },
-
-  brandSub: {
-    fontSize: 12,
-    opacity: 0.8,
-    marginTop: 2,
-    wordBreak: "break-all",
-  },
-
-  nav: {
-    display: "flex",
-    gap: 10,
-    alignItems: "center",
-    flexWrap: "wrap",
-    justifyContent: "flex-end",
-  },
-
-  navBtn: {
-    textDecoration: "none",
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(15,23,42,0.10)",
-    background: "rgba(255,255,255,0.9)",
-    color: "#0b1220",
-    fontWeight: 700,
-    fontSize: 14,
-    cursor: "pointer",
-  },
-
-  navBtnActive: {
-    textDecoration: "none",
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(124,58,237,0.35)",
-    background: "rgba(124,58,237,0.10)",
-    color: "#2b175f",
-    fontWeight: 800,
-    fontSize: 14,
-    cursor: "pointer",
-  },
-
-  buyBtn: {
-    padding: "10px 14px",
-    borderRadius: 999,
-    border: "1px solid rgba(124,58,237,0.35)",
-    background: "linear-gradient(135deg, rgba(124,58,237,1) 0%, rgba(59,130,246,1) 100%)",
-    color: "white",
-    fontWeight: 900,
-    cursor: "pointer",
-  },
-
-  main: {
-    padding: "18px 14px 28px",
-    display: "grid",
-    placeItems: "center",
-  },
-
-  card: {
-    width: "min(980px, 100%)",
-    borderRadius: 20,
-    background: "rgba(255,255,255,0.94)",
-    border: "1px solid rgba(15,23,42,0.08)",
-    boxShadow: "0 18px 60px rgba(2,6,23,0.10)",
-    padding: 18,
-  },
-
-  h1: {
-    margin: 0,
-    fontSize: 28,
-    letterSpacing: -0.4,
-  },
-
-  p: {
-    marginTop: 8,
-    marginBottom: 0,
-    opacity: 0.85,
-  },
-
-  grid: {
-    marginTop: 16,
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
-    gap: 12,
-  },
-
-  stat: {
-    borderRadius: 16,
-    padding: 14,
-    border: "1px solid rgba(15,23,42,0.08)",
-    background:
-      "linear-gradient(180deg, rgba(245,243,255,0.7) 0%, rgba(255,255,255,1) 100%)",
-  },
-
-  statLabel: {
-    fontSize: 12,
-    fontWeight: 800,
-    opacity: 0.75,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-  },
-
-  statValue: {
-    fontSize: 28,
-    fontWeight: 900,
-    marginTop: 6,
-  },
-
-  statHint: {
-    fontSize: 12,
-    opacity: 0.7,
-    marginTop: 2,
-  },
-
-  nextSteps: {
-    borderRadius: 16,
-    padding: 14,
-    border: "1px solid rgba(15,23,42,0.08)",
-    background: "rgba(255,255,255,0.92)",
-  },
-
-  nextTitle: {
-    fontSize: 14,
-    fontWeight: 900,
-  },
-
-  nextText: {
-    marginTop: 6,
-    fontSize: 14,
-    opacity: 0.85,
-  },
-
-  actionsRow: {
-    display: "flex",
-    gap: 10,
-    flexWrap: "wrap",
-    marginTop: 12,
-  },
-
-  primaryBtn: {
-    textDecoration: "none",
-    padding: "12px 14px",
-    borderRadius: 14,
-    border: "1px solid rgba(124,58,237,0.25)",
-    background:
-      "linear-gradient(135deg, rgba(124,58,237,1) 0%, rgba(59,130,246,1) 100%)",
-    color: "white",
-    fontWeight: 900,
-  },
-
-  secondaryBtn: {
-    textDecoration: "none",
-    padding: "12px 14px",
-    borderRadius: 14,
-    border: "1px solid rgba(15,23,42,0.10)",
-    background: "rgba(255,255,255,0.95)",
-    color: "#0b1220",
-    fontWeight: 900,
-  },
-
-  footer: {
-    width: "min(980px, 100%)",
-    fontSize: 12,
-    opacity: 0.7,
-    marginTop: 12,
-    textAlign: "center",
-  },
-};
